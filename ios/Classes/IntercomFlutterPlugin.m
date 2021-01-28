@@ -121,15 +121,32 @@ id unread;
         [Intercom presentMessageComposer:message];
     } else if([@"sendTokenToIntercom" isEqualToString:call.method]){
         NSString *token = call.arguments[@"token"];
-        if(token != (id)[NSNull null] && token != nil) {
-            NSData* encodedToken=[token dataUsingEncoding:NSUTF8StringEncoding];
-            [Intercom setDeviceToken:encodedToken];
-            result(@"Token set");
+        if (token != (id)[NSNull null] && token != nil) {
+            NSData * tokenData = [self dataFromHexString:token];
+            [Intercom setDeviceToken:tokenData];
+            result(@"Token sent to Intercom");
         }
     }
     else {
         result(FlutterMethodNotImplemented);
     }
+}
+
+// Needed to change string token back to NSData
+// Source: https://iphoneappcode.blogspot.com/2012/04/nsdata-to-hexstring-and-hexstring-to.html
+- (NSData *)dataFromHexString:(NSString *)string
+{
+    NSMutableData *stringData = [[NSMutableData alloc] init];
+    unsigned char whole_byte;
+    char byte_chars[3] = {'\0','\0','\0'};
+    int i;
+    for (i=0; i < [string length] / 2; i++) {
+        byte_chars[0] = [string characterAtIndex:i*2];
+        byte_chars[1] = [string characterAtIndex:i*2+1];
+        whole_byte = strtol(byte_chars, NULL, 16);
+        [stringData appendBytes:&whole_byte length:1];
+    }
+    return stringData;
 }
 
 - (ICMUserAttributes *) getAttributes:(FlutterMethodCall *)call {
